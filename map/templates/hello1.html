@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Color Grid</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(50, 15px);
+            grid-template-rows: repeat(30, 15px);
+            gap: 1px;
+            margin-bottom: 20px;
+        }
+        
+        .cell {
+            width: 15px;
+            height: 15px;
+            background-color: transparent; /* Start as clear/transparent */
+            border: 1px solid #eee;
+            transition: background-color 0.3s;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 8px 12px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Data Color Grid</h1>
+    
+    <div class="controls">
+        <textarea id="dataInput" placeholder="Paste your 30x50 data here (comma or space separated values)"></textarea>
+        <button id="applyData">Apply Data</button>
+        <button id="clearGrid">Clear Grid</button>
+    </div>
+    
+    <div class="grid-container" id="grid"></div>
+    
+    <script>
+        // Grid dimensions
+        const COLS = 50;
+        const ROWS = 30;
+        
+        // Create empty grid data structure
+        let gridData = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        
+        // Color mapping
+        const colorMap = {
+            0: 'transparent',
+            1: 'blue',
+            2: 'yellow',
+            3: 'red'
+        };
+        
+        // Initialize the grid with clear cells
+        function initGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.dataset.value = 0; // Start with 0 (transparent)
+                    grid.appendChild(cell);
+                }
+            }
+        }
+        
+        // Update grid with data
+        function updateGrid(data) {
+            const cells = document.querySelectorAll('.cell');
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const value = data[row][col];
+                    const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                    
+                    if (cell) {
+                        cell.dataset.value = value;
+                        cell.style.backgroundColor = colorMap[value] || 'transparent';
+                    }
+                }
+            }
+        }
+        
+        // Parse input data
+        function parseInputData(input) {
+            const lines = input.trim().split('\n');
+            const data = [];
+            
+            for (let row = 0; row < ROWS; row++) {
+                const line = lines[row] || '';
+                // Split by commas or whitespace
+                const values = line.split(/[, \t]+/).filter(v => v !== '');
+                const rowData = [];
+                
+                for (let col = 0; col < COLS; col++) {
+                    // Use 0 if no data provided
+                    const value = parseInt(values[col]) || 0;
+                    // Only allow 0-3 values
+                    rowData[col] = Math.max(0, Math.min(3, value));
+                }
+                
+                data.push(rowData);
+            }
+            
+            return data;
+        }
+        
+        // Event listeners
+        document.getElementById('applyData').addEventListener('click', function() {
+            const input = document.getElementById('dataInput').value;
+            const parsedData = parseInputData(input);
+            updateGrid(parsedData);
+        });
+        
+        document.getElementById('clearGrid').addEventListener('click', function() {
+            document.getElementById('dataInput').value = '';
+            const emptyData = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+            updateGrid(emptyData);
+        });
+        
+        // Initialize the grid on page load
+        window.onload = initGrid;
+    </script>
+</body>
+</html>

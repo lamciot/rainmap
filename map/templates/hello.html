@@ -1,0 +1,143 @@
+{% comment %} {% if name %}
+<h1>Hellooo {{name}}</h1>
+{% else %}
+<h1>Hellooo World</h1>
+{% endif %} {% endcomment %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Grid</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(50, 15px);
+            grid-template-rows: repeat(30, 15px);
+            gap: 1px;
+            margin-bottom: 20px;
+        }
+        
+        .cell {
+            width: 15px;
+            height: 15px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        
+        .cell:hover {
+            border: 1px solid #333;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 8px 12px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interactive Grid</h1>
+    
+    <div class="controls">
+        <button id="increment">Increment Values</button>
+        <button id="randomize">Randomize Values</button>
+        <button id="reset">Reset Grid</button>
+    </div>
+    
+    <div class="grid-container" id="grid"></div>
+    
+    <script>
+        // Grid dimensions
+        const COLS = 50;
+        const ROWS = 30;
+        
+        // Create grid data structure
+        let gridData = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        
+        // Initialize the grid
+        function initGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.dataset.value = gridData[row][col];
+                    
+                    // Set initial color based on value
+                    updateCellColor(cell, gridData[row][col]);
+                    
+                    // Add click event to increment value
+                    cell.addEventListener('click', function() {
+                        const row = parseInt(this.dataset.row);
+                        const col = parseInt(this.dataset.col);
+                        gridData[row][col]++;
+                        this.dataset.value = gridData[row][col];
+                        updateCellColor(this, gridData[row][col]);
+                    });
+                    
+                    grid.appendChild(cell);
+                }
+            }
+        }
+        
+        // Update cell color based on value
+        function updateCellColor(cell, value) {
+            // Color gradient from light blue (low) to dark red (high)
+            const hue = Math.max(0, 240 - (value * 2)); // Blue (240) to Red (0)
+            const saturation = 80 + Math.min(20, value * 2);
+            const lightness = 90 - Math.min(40, value * 4);
+            
+            cell.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        }
+        
+        // Increment all cell values
+        document.getElementById('increment').addEventListener('click', function() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                gridData[row][col]++;
+                cell.dataset.value = gridData[row][col];
+                updateCellColor(cell, gridData[row][col]);
+            });
+        });
+        
+        // Randomize cell values
+        document.getElementById('randomize').addEventListener('click', function() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                gridData[row][col] = Math.floor(Math.random() * 60);
+                cell.dataset.value = gridData[row][col];
+                updateCellColor(cell, gridData[row][col]);
+            });
+        });
+        
+        // Reset grid
+        document.getElementById('reset').addEventListener('click', function() {
+            gridData = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+            initGrid();
+        });
+        
+        // Initialize the grid on page load
+        window.onload = initGrid;
+    </script>
+</body>
+</html>
