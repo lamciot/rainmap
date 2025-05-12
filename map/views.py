@@ -15,6 +15,18 @@ import io
 import numpy as np
 
 def generate_map(request):
+    # if request.method == 'POST':
+    #     form = DateTimeSearchForm(request.POST)
+    #     if form.is_valid():
+    #         search_dt = form.cleaned_data['date_time']
+    #         try:
+    #             entry = MuongXen.objects.get(date_time=search_dt)
+    #             return render(request, 'map.html', {'entry': entry})
+    #         except MuongXen.DoesNotExist:
+    #             return HttpResponse("No data found for this datetime")
+    # else:
+    #     form = DateTimeSearchForm()
+
     # Create a figure
     fig, ax = plt.subplots(figsize=(10, 8))
     
@@ -117,8 +129,9 @@ def generate_map(request):
     # Return the image as HTTP response
     return HttpResponse(buffer.getvalue(), content_type='image/png')
 
-def main(request):
-    return render(request, 'main.html')
+def base(request):
+    form = DateTimeSearchForm()
+    return render(request, ['map.html'],{'form':form})
 
 # def generate_map(request):
 #     # Create figure

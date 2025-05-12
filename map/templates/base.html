@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Map Display</title>
+</head>
+<body>
+    <h1> Rainmap Matplotlib </h1>
+    <form method='post'>
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_date_time">Date and Time:</label>
+            {{ form.date_time }}
+        </div>
+
+        {% comment %} <div class="entry">
+            <div class="entry-date">{{ entry.date_time }}</div>
+            <input id="dataInput" value="{{ entry.data }}" hidden>
+        </div>
+        {% endcomment %}
+
+        <input type="submit" value="search">
+
+        {% comment %}
+        {% if entry == None %}
+            <p>No entries yet.</p>
+        {% else %}
+            <p>Bấm "Display" để hiển thị dữ liệu</p>
+            <input type="button" id="applyData" value="Display" onClick="clickMess()">
+            <p id="noti"></p>
+        {% endif %}  {% endcomment %}
+        <a href="{% url 'base' %}" class="reset-button"><button>Reset</button></a>
+    </form>
+    {% block map %}
+    {% endblock %}
+</body>
+</html>

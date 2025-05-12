@@ -1,4 +1,6 @@
-<form method='post'>
-<input type="datetime-local">
-<br>
-<img src="{% url 'generate_map' %}" alt="Map Display">
+{% extends 'base.html' %}
+{% block map %}
+
+    <img src="{% url 'generate_map' %}" alt="Map Display">
+
+{% endblock %}
