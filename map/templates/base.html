@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,32 +6,46 @@
 </head>
 <body>
     <h1> Rainmap Matplotlib </h1>
-    <form method='post'>
+    <form method="POST" action="{% url 'generate_map' %}">
         {% csrf_token %}
         <div class="form-group">
-            <label for="id_date_time">Date and Time:</label>
-            {{ form.date_time }}
+            <label for="date_time">Date and Time:</label>
+            {% comment %} {{ form.date_time }} {% endcomment %}
+            <input type="datetime-local" name="date_time" value="2016-09-01T10:00" step="3600" required id="date_time">
         </div>
 
-        {% comment %} <div class="entry">
+        <div class="entry">
             <div class="entry-date">{{ entry.date_time }}</div>
             <input id="dataInput" value="{{ entry.data }}" hidden>
         </div>
-        {% endcomment %}
 
         <input type="submit" value="search">
 
-        {% comment %}
         {% if entry == None %}
             <p>No entries yet.</p>
         {% else %}
             <p>Bấm "Display" để hiển thị dữ liệu</p>
             <input type="button" id="applyData" value="Display" onClick="clickMess()">
             <p id="noti"></p>
-        {% endif %}  {% endcomment %}
+        {% endif %}
         <a href="{% url 'base' %}" class="reset-button"><button>Reset</button></a>
     </form>
-    {% block map %}
-    {% endblock %}
+        <img src="{% url 'get_map_image' %}" alt="Map Display">
+
 </body>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.querySelector('input[type="datetime-local"]');
+    dateInput.addEventListener('input', function() {
+        if (!this.value) return;
+        
+        const date = new Date(this.value);
+        if (date.getMinutes() !== 0) {
+            date.setMinutes(0);
+            this.value = date.toISOString().slice(0, 16);
+        }
+    });
+    
+});
+</script>
 </html>
