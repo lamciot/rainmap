@@ -1,289 +1,249 @@
-from django.shortcuts import render, redirect
-from django.template import loader
-from django.http import HttpResponse
+from django.shortcuts import render
 from .models import MuongXen
-from .forms import DateTimeSearchForm, MxMap
-import base64
+from .forms import DateTimeSearchForm
 import matplotlib
 matplotlib.use('Agg')  # Set the backend to Agg before importing pyplot
-import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon, Rectangle, Patch
-from matplotlib.collections import PatchCollection
-import shapefile
-from django.http import HttpResponse
-import io
 import numpy as np
+import folium
 
-# def generate_map(request):
-#     # if request.method == 'POST':
-#     #     form = DateTimeSearchForm(request.POST)
-#     #     if form.is_valid():
-#     #         search_dt = form.cleaned_data['date_time']
-#     #         try:
-#     #             entry = MuongXen.objects.get(date_time=search_dt)
-#     #             return render(request, 'map.html', {'entry': entry})
-#     #         except MuongXen.DoesNotExist:
-#     #             return HttpResponse("No data found for this datetime")
-#     # else:
-#     #     form = DateTimeSearchForm()
+def map(time='2021-01-01T10:00'):
+    lat = 20
+    lon = 104
+    # Create a Map instance
+    bounds = [[19, 102], [22, 108]]
+    m = folium.Map(location=[lat, lon], zoom_start=8, min_zoom=7, max_bounds=True)  # [latuddue(vi do), longtitude(kinh do)]
+    
+    # folium.Rectangle(
+    #     bounds=bounds,
+    #     color='black',
+    #     fill=False,
+    #     weight=3
+    # ).add_to(m)
+    
+    # Add bounds control to prevent panning outside ( start zoom+1)
+    m.fit_bounds(bounds)
+    
+    # Add markers
+    # folium.Marker(
+    #     location=bounds[0],
+    #     popup="Limit",
+    #     icon=folium.Icon(color="black")
+    # ).add_to(m)
+    
+    if time != None :
+        entry = list(MuongXen.objects.filter(date_time=time).values_list('data',flat=True))
 
-#     # Create a figure
-#     fig, ax = plt.subplots(figsize=(10, 8))
-    
-#     # Set the bounds for your specific region (latitude: 19-20, longitude: 107-104)
-#     min_lat, max_lat = 19, 22.08
-#     min_lon, max_lon = 104, 109.1
-    
-#     # Create a simple basemap (for demonstration)
-#     # In a real application, you would use proper map data
-#     ax.set_xlim(min_lon, max_lon)
-#     ax.set_ylim(min_lat, max_lat)
-#     ax.set_xlabel('Longitude')
-#     ax.set_ylabel('Latitude')
-#     ax.set_title('Lượng mưa trong khu vực')
-    
-#     # Draw grid lines
-#     ax.grid(True, linestyle='--', alpha=0.7)
-    
-#     # If you have a shapefile, you can load and plot it like this:
-    
-#     # Example shapefile loading (replace with your actual shapefile path)
-#     sf = shapefile.Reader("map/vn_shp.zip/vn.shp")
-    
-#     for shape in sf.shapeRecords():
-#         points = shape.shape.points
-#         parts = shape.shape.parts
-        
-#         patches = []
-#         for i in range(len(parts)):
-#             start = parts[i]
-#             if i == len(parts) - 1:
-#                 end = len(points)
-#             else:
-#                 end = parts[i + 1]
-#             polygon = Polygon(points[start:end])
-#             patches.append(polygon)
-        
-#         pc = PatchCollection(patches, facecolor='lightblue', edgecolor='black', alpha=0.8)
-#         ax.add_collection(pc)
-#     # except:
-#     #     # Fallback simple rectangle if shapefile not found
-#     #     ax.add_patch(plt.Rectangle((min_lon, min_lat), 
-#     #                               max_lon-min_lon, max_lat-min_lat,
-#     #                               fill=False, edgecolor='blue', linewidth=2))
-#     #     print("shape file not found")
-    
-#     if request.method == 'POST':
-#         date_time = request.POST.get('date_time')
-#         print("DATETIME received!" + date_time)
-#         # data_file = MuongXen.objects.values_list('data').filter(date_time = date_time)
-#         # print(data_file)
-#         data_file = "map/test-square000.txt"
-#         with open(data_file, 'r') as f:
-#             data = np.array([[float(x) for x in line.strip().split()] for line in f.readlines()[::-1]])
-#     else:
-#         print("Not yet POST")
-#         form = DateTimeSearchForm()
-#     try:
-#         # Load and process your data file
-#         # data_file = "map/test-square000.txt"
-#         # data = np.array([[float(x) for x in line.strip().split()] for line in data_file.readlines()[::-1]])
-#         # with open(data_file, 'r') as f:
-#         #     data = np.array([[float(x) for x in line.strip().split()] for line in f.readlines()[::-1]])
-        
-#         # Create grid
-#         lons = np.arange(min_lon, max_lon, 0.1)
-#         lats = np.arange(min_lat, max_lat, 0.1)
-        
-#         # Plot each cell with higher zorder
-#         for i in range(len(lats)-1):
-#             for j in range(len(lons)-1):
-#                 value = data[i, j]
-#                 color = 'white'  # default
-#                 if value > 2.0:
-#                     color = 'red'
-#                 elif value > 1.5:
-#                     color = 'orange'
-#                 elif value > 1.0:
-#                     color = 'yellow'
-#                 elif value > 0.5:
-#                     color = 'dodgerblue'
-#                 elif value > 0.2:
-#                     color = 'blue'
-#                 else:
-#                     color = (0,0,0,0)
-                
-#                 # Create rectangle with higher zorder (foreground)
-#                 rect = Rectangle((lons[j], lats[i]), 0.1, 0.1,
-#                                 facecolor=color,
-#                                 linewidth=0, # Slightly transparent
-#                                 zorder=2)  # Higher zorder = foreground
-#                 ax.add_patch(rect)
-    
-#     except Exception as e:
-#         ax.text(0.5, 0.5, f"Data Error: {str(e)}", 
-#                ha='center', va='center', transform=ax.transAxes,
-#                zorder=3)
+        try:
+            # str_entry = repr(entry).replace("['", "[[").replace("']","]]")
+            data = [num.split() for num in entry[0].split('\n')[::-1]]
+            data_array = np.array(data, dtype=float)
+            print("readed")
+            # Create FeatureGroup for the data layer
+            data_layer = folium.FeatureGroup(name='Data Layer', show=True)
+            
+            # Process each 0.1x0.1 degree cell
+            for i in range(data_array.shape[0]):
+                for j in range(data_array.shape[1]):
+                    value = data_array[i,j]
+                    # Calculate cell bounds (0.1x0.1 degree)
+                    lat_min = 19 + i * 0.1  # Adjust starting lat as needed
+                    lon_min = 102 + j * 0.1  # Adjust starting lon as needed
+                    lat_max = lat_min + 0.1
+                    lon_max = lon_min + 0.1
+                    
+                    # Set color based on value
+                    # if value <= 1:
+                    #     color = 'darkred' 
+                    # else:
+                    #     color = 'mediumspringgreen'
+                    
+                    
+                    def set_color(value):
+                        if value >= 25: return "brown"
+                        if value >= 20: return "orangered"
+                        if value >= 15: return "darkorange"
+                        if value >= 10: return "gold"
+                        if value >= 5: return "yellow"
+                        if value >= 3: return "greenyellow"
+                        if value >= 2: return "springgreen"
+                        if value >= 1: return "deepskyblue"
+                        if value >= 0.5: return "dodgerblue"
+                        if value >= 0.1: return "blue"
+                        if value >= 0: return "transparent" # '#FFFFFF00': transparent
+                        return "gray"
+                    color = set_color(value)
+                    fill_color = color
 
-#     legend_elements= [
-#     Patch(facecolor='red', label=' > 2.0'),
-#     Patch(facecolor='orange', label=' > 1.5'),
-#     Patch(facecolor='yellow', label=' > 1.0'),
-#     Patch(facecolor='dodgerblue', label=' > 0.5'),
-#     Patch(facecolor='blue', label=' > 0.2')
-#     ]
-#     ax.legend(handles=legend_elements, loc='upper right')
-    
-#     # Convert plot to PNG image
-#     buffer = io.BytesIO()
-#     plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
-#     plt.close(fig)
-#     buffer.seek(0)
-    
-#     # Return the image as HTTP response
-#     return HttpResponse(buffer.getvalue(), content_type='image/html')
-    # return render(buffer.getvalue(),'base.html',content_type='image/png')
-
-# def base(request):
-#     form = DateTimeSearchForm()
-#     generate_map(request)
-#     return render(request, ['map.html'],{'form':form})
-
-def generate_map(request):
-    if request.method == 'POST':
-        selected_datetime = request.POST.get('datetime')
-        request.session['selected_datetime'] = selected_datetime
-
-    # Create a figure
-    fig, ax = plt.subplots(figsize=(10, 8))
-    
-    # Set the bounds for your specific region (latitude: 19-20, longitude: 107-104)
-    min_lat, max_lat = 19, 22.08
-    min_lon, max_lon = 104, 109.1
-    
-    # Create a simple basemap (for demonstration)
-    # In a real application, you would use proper map data
-    ax.set_xlim(min_lon, max_lon)
-    ax.set_ylim(min_lat, max_lat)
-    ax.set_xlabel('Longitude')
-    ax.set_ylabel('Latitude')
-    ax.set_title('Lượng mưa trong khu vực')
-    
-    # Draw grid lines
-    ax.grid(True, linestyle='--', alpha=0.7)
-    
-    # If you have a shapefile, you can load and plot it like this:
-    
-    # Example shapefile loading (replace with your actual shapefile path)
-    sf = shapefile.Reader("map/vn_shp.zip/vn.shp")
-    
-    for shape in sf.shapeRecords():
-        points = shape.shape.points
-        parts = shape.shape.parts
+                    # Add rectangle for this cell
+                    folium.Rectangle(
+                        bounds=[[lat_min, lon_min], [lat_max, lon_max]],
+                        color=color,
+                        fill=True,
+                        fill_color=fill_color,
+                        fill_opacity=0.7,
+                        weight=0.5
+                    ).add_to(data_layer)
+                    
+            data_layer.add_to(m)
+        except Exception as e:
+            print(f"Error loading data file: {e}")
+    else:
+        print("Time doesn't exist or wrong")
         
-        patches = []
-        for i in range(len(parts)):
-            start = parts[i]
-            if i == len(parts) - 1:
-                end = len(points)
-            else:
-                end = parts[i + 1]
-            polygon = Polygon(points[start:end])
-            patches.append(polygon)
-        
-        pc = PatchCollection(patches, facecolor='lightblue', edgecolor='black', alpha=0.8)
-        ax.add_collection(pc)
-    # except:
-    #     # Fallback simple rectangle if shapefile not found
-    #     ax.add_patch(plt.Rectangle((min_lon, min_lat), 
-    #                               max_lon-min_lon, max_lat-min_lat,
-    #                               fill=False, edgecolor='blue', linewidth=2))
-    #     print("shape file not found")
+    # Add boundary rectangle (on top of data layer)
+    # folium.Rectangle(
+    #     bounds=bounds,
+    #     color='#ff7800',
+    #     fill=False,
+    #     weight=2
+    # ).add_to(m)
     
+    #Khu vuc quy chau
+    folium.Marker(
+        location=[19.55722, 105.149253],
+        popup="Quỳ Châu",
+        icon=folium.Icon(color="blue")
+    ).add_to(m)
+    
+    folium.Rectangle(
+        bounds=[[19.5, 104],[20.5, 105.1]],
+        color='blue',
+        fill=False,
+        weight=2
+    ).add_to(m)
+
+    #Khu vuc muong lat
+    folium.Marker(
+        location=[20.52461, 104.514255],
+        popup="Mường Lát",
+        icon=folium.Icon(color="red")
+    ).add_to(m)
+    
+    folium.Rectangle(
+        bounds=[[20.5, 102.4],[21.5, 104.5]],
+        color='red',
+        fill=False,
+        weight=2
+    ).add_to(m)
+
+    #Khu vuc xa la
+    folium.Marker(
+        location=[20.936636, 103.926018],
+        popup="Xã Là",
+        
+        icon=folium.Icon(color="gray")
+    ).add_to(m)
+    
+    folium.Rectangle(
+        bounds=[[20.9, 102.4],[21.5, 103.7]],
+        color='gray',
+        fill=False,
+        weight=2
+    ).add_to(m)
+
+    #KHu vuc cua dat
+    folium.Marker(
+        location=[19.872367,105.284464],
+        popup="Cửa Đạt",
+        
+        icon=folium.Icon(color="purple")
+    ).add_to(m)
+
+    folium.Rectangle(
+        bounds=[[19.7, 104],[20.5, 105.3]],
+        color='purple',
+        fill=False,
+        weight=2
+    ).add_to(m)
+
+    #Khu vuc muong xen
+    folium.Marker(
+        location=[19.4, 104.166667],
+        popup="Mường Xén",
+        icon=folium.Icon(color="green")
+    ).add_to(m)
+
+    folium.Rectangle(
+        bounds=[[19, 102],[20.5, 104.2]],
+        color='green',
+        fill=False,
+        weight=2
+    ).add_to(m)
+
+    # Define the legend's HTML
+    legend_html = '''
+    <div style="position: fixed; 
+        bottom: 10px; left: 10px; width: 400px; height: 30px; 
+        border:2px solid grey; z-index:9999; font-size:14px;
+        background-color:white; opacity: 0.85;">
+        <img src="../static/color_scale.png" alt="Color Scale">
+    </div>
+    '''
+
+    # Add the legend to the map
+    m.get_root().html.add_child(folium.Element(legend_html))
+
+    # Save the map to an HTML file
+    m.save('./map/templates/map.html')
+
+    # Get HTML representation of map
+    return m._repr_html_()
+
+
+def show_map(request):
     if request.method == 'POST':
         date_time = request.POST.get('date_time')
-        print("DATETIME received!" + date_time)
-        # data_file = MuongXen.objects.values_list('data').filter(date_time = date_time)
-        # print(data_file)
-        data_file = "map/test-square000.txt"
-        with open(data_file, 'r') as f:
-            data = np.array([[float(x) for x in line.strip().split()] for line in f.readlines()[::-1]])
+        # print("Datetime recieved! " + date_time)
+        entry = list(MuongXen.objects.filter(date_time=date_time).values_list('data',flat=True))
+        map_html = map(date_time)
+ 
     else:
-        print("Not yet POST")
-        form = DateTimeSearchForm()
-    try:
-        # Load and process your data file
-        data_file = "map/test-square000.txt"
-        # data = np.array([[float(x) for x in line.strip().split()] for line in data_file.readlines()[::-1]])
-        with open(data_file, 'r') as f:
-            data = np.array([[float(x) for x in line.strip().split()] for line in f.readlines()[::-1]])
-        
-        # Create grid
-        lons = np.arange(min_lon, max_lon, 0.1)
-        lats = np.arange(min_lat, max_lat, 0.1)
-        
-        # Plot each cell with higher zorder
-        for i in range(len(lats)-1):
-            for j in range(len(lons)-1):
-                value = data[i, j]
-                color = 'white'  # default
-                if value > 2.0:
-                    color = 'red'
-                elif value > 1.5:
-                    color = 'orange'
-                elif value > 1.0:
-                    color = 'yellow'
-                elif value > 0.5:
-                    color = 'dodgerblue'
-                elif value > 0.2:
-                    color = 'blue'
-                else:
-                    color = (0,0,0,0)
-                
-                # Create rectangle with higher zorder (foreground)
-                rect = Rectangle((lons[j], lats[i]), 0.1, 0.1,
-                                facecolor=color,
-                                linewidth=0, # Slightly transparent
-                                zorder=2)  # Higher zorder = foreground
-                ax.add_patch(rect)
-    
-    except Exception as e:
-        ax.text(0.5, 0.5, f"Data Error: {str(e)}", 
-               ha='center', va='center', transform=ax.transAxes,
-               zorder=3)
+        print("Not yet Post")
+        date_time = None
+        entry = None
+        map_html = map()
+ 
+        # return render(request, ['base.html'], {'date_time': date_time, 'entry':entry})
 
-    legend_elements= [
-    Patch(facecolor='red', label=' > 2.0'),
-    Patch(facecolor='orange', label=' > 1.5'),
-    Patch(facecolor='yellow', label=' > 1.0'),
-    Patch(facecolor='dodgerblue', label=' > 0.5'),
-    Patch(facecolor='blue', label=' > 0.2')
-    ]
-    ax.legend(handles=legend_elements, loc='upper right')
-    
-    # Convert plot to PNG image
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
-    plt.close(fig)
-    buffer.seek(0)
-    try:
-    # Return the image as HTTP response
-        request.session['map_image'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
-        request.session['image_generated'] = True
-        return redirect('base')
-    except Exception as e:
-        return HttpResponse(f"Error: {str(e)}", status=400)
-
-    # return HttpResponse(buffer.getvalue(), content_type='image/png')
+    return render(request, ['base.html'], {'map': map_html, 'date_time': date_time, 'entry':entry})
 
 
-def base(request):
-    image_generated = request.session.pop('image_generated', False)
-    return render(request, ['map.html'],{'image_generated': image_generated,
-                                        'selected_datetime': request.session.get('selected_datetime')})
-def get_map_image(request):
-    if 'map_image' in request.session:
-        image_data = base64.b64decode(request.session['map_image'])
-        # image_data = request.session['map_image']
-        return HttpResponse(image_data, content_type='image/png')
-    return HttpResponse(status=404)
+def login(request):
+    if request.method == "POST":
+        # username = request.POST.get('username')
+        # password = request.POST.get('password')
+        date_time = request.POST.get('date_time')
+        search_entry = MuongXen.objects.filter(date_time=date_time)
+        entry = list(search_entry.values_list('data',flat=True))
+        map_html = map(date_time)
+        context = None
+        if search_entry:
+            context = {
+                'map': map_html, 'date_time': date_time, 'entry':entry,
+                'st_xala': list(search_entry.values_list('st_xa_la', flat=True))[0],
+                'st_muonglat': list(search_entry.values_list('st_muong_lat', flat=True))[0],
+                'st_cuadat': list(search_entry.values_list('st_cua_dat', flat=True))[0],
+                'st_muongxen': list(search_entry.values_list('st_muong_xen', flat=True))[0],
+                'st_quychau': list(search_entry.values_list('st_quy_chau', flat=True))[0]
+            }
+        else:
+            context = {
+                'map': map_html, 'date_time': date_time,
+                'st_xala': None,
+                'st_muonglat': None,
+                'st_cuadat': None,
+                'st_muongxen': None,
+                'st_quychau':None 
+            }
+        return render(request, ['login-base.html'], context)
+    return render(request, 'login.html')
+
+
+def register(request):
+    return render(request, 'register.html')
+
+def login_base(request):
+    return render(request, 'login-base.html')
+
+def add_form(request):
+    return render(request, 'add-form.html')

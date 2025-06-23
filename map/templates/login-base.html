@@ -1,0 +1,111 @@
+{% load static%}
+{% load bootstrap5 %}
+{% comment %} {% load bootstrap_icons %} {% endcomment %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Map Display</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'map.css' %}">
+</head>
+<body>
+    <div class="d-flex py-4" style="background-image: url('../static/sky-head1.png'); background-repeat: no-repeat; background-size: cover">
+        <div class="p-2 flex-grow-1">
+            <h1> LOGIN Display </h1>
+        </div>
+
+        <div class="p-2">
+            {% comment %} {% bs_icon 'file-person' size='1.5rem' %} {% endcomment %}
+            <button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            #username
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><button class="dropdown-item" type="button">Thông tin người dùng</button></li>
+                <li><button class="dropdown-item" type="button">Đổi mật khẩu</button></li>
+                <li><button class="dropdown-item" type="button"><a href="{% url 'login' %}" style="text-decoration: none; color: black">Đăng xuất</a></button></li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="p-2">
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="date_time">Date and Time:</label>
+                <input type="datetime-local" name="date_time" value="2021-01-01T10:00" step="3600" required >
+            </div>
+           
+            <div class="p-2">
+                <input type="submit" class="btn btn-primary" id="liveToastBtn" value="search">
+            </div>
+        </form> 
+    </div>
+    {% if entry %}
+        <div class="bg-success col-md-3 text-light">
+            <p>Dữ liệu mưa đang được hiển thị: {{ date_time }}.</p>
+        </div>
+    {% else %}
+        <div class="bg-secondary col-md-3 text-light">
+            <p>Không có dữ liệu.</p>
+        </div>
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-6">
+            {{ map|safe }}
+        </div>
+        <div class="col-5">
+            <div class="btn-group" role="group" aria-label="Basic example">
+                <button type="button" class="btn btn-primary">Thêm</button>
+                <button type="button" class="btn btn-primary">Sửa</button>
+                <button type="button" class="btn btn-primary">Xóa</button>
+            </div>
+
+            <div>
+                <h2> Thông tin mực nước các trạm</h2>
+                {% comment %} {% bs_icon 'geo-alt-fill' color="gray" %} {% endcomment %}
+                <label>Xã Là </label>
+                <input value={{ st_xala }} readonly>
+                <br>
+                {% comment %} {% bs_icon 'geo-alt-fill' color="red" %} {% endcomment %}
+                <label>Mường Lát </label>
+                <input value={{ st_muonglat }} readonly>
+                <br>
+                {% comment %} {% bs_icon 'geo-alt-fill' color="violet" %} {% endcomment %}
+                <label>Cửa Đạt</label>
+                <input value={{ st_cuadat }} readonly>
+                <br>
+                {% comment %} {% bs_icon 'geo-alt-fill' color="deepskyblue" %} {% endcomment %}
+                <label>Quỳ Châu</label>
+                <input value={{ st_quychau }} readonly>
+                <br>
+                {% comment %} {% bs_icon 'geo-alt-fill' color="green" %} {% endcomment %}
+                <label>Mường Xén</label>
+                <input value={{ st_muongxen }} readonly>
+            </div>
+        </div>
+    </div>
+    
+
+</body>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.querySelector('input[type="datetime-local"]');
+    dateInput.addEventListener('input', function() {
+        if (!this.value) return;
+        
+        const date = new Date(this.value);
+        if (date.getMinutes() !== 0) {
+            date.setMinutes(0);
+            this.value = date.toISOString().slice(0, 16);
+        }
+    });
+    
+}); 
+
+</script>
+</html>

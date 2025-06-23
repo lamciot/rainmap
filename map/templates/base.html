@@ -1,36 +1,53 @@
 {% load static %}
+{% load bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Map Display</title>
+    <link rel="stylesheet" href="{% static 'map.css' %}">
 </head>
 <body>
-    <h1> Rainmap Matplotlib </h1>
-    <form method="POST" action="{% url 'generate_map' %}">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="date_time">Date and Time:</label>
-            {% comment %} {{ form.date_time }} {% endcomment %}
-            <input type="datetime-local" name="date_time" value="2016-09-01T10:00" step="3600" required id="date_time">
+    <div class="d-flex py-4" style="background-image: url('../static/sky-head1.png'); background-repeat: no-repeat; background-size: cover">
+        <div class="p-2 flex-grow-1">
+            <h1> Rainmap Demo </h1>
         </div>
 
-        <div class="entry">
-            <div class="entry-date">{{ entry.date_time }}</div>
-            <input id="dataInput" value="{{ entry.data }}" hidden>
+        <div class="p-2">
+            <a href="/login"><button class="btn btn-secondary">Sign in</button></a>
         </div>
 
-        <input type="submit" value="search">
+    </div>
+    <div class="d-flex py-4">
+        <div class="p-2 flex-grow-1">
+            <form method="POST" action="{% url 'base' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="date_time">Date and Time:</label>
+                        {% comment %} {{ form.date_time }}  {% endcomment %}
+                    <input type="datetime-local" name="date_time" value="2021-01-01T10:00" step="3600" required >
+                </div>
+            
+                <div class="p-2">
+                    <input type="submit" class="btn btn-primary" id="liveToastBtn" value="search">
 
-        {% if entry == None %}
-            <p>No entries yet.</p>
-        {% else %}
-            <p>Bấm "Display" để hiển thị dữ liệu</p>
-            <input type="button" id="applyData" value="Display" onClick="clickMess()">
-            <p id="noti"></p>
-        {% endif %}
-        <a href="{% url 'base' %}" class="reset-button"><button>Reset</button></a>
-    </form>
-        <img src="{% url 'get_map_image' %}" alt="Map Display">
+                </div>
+            </form> 
+        </div>
+    </div>
+    {% if entry %}
+        <div class="bg-success col-md-3 text-light">
+            <p>Dữ liệu mưa đang được hiển thị: {{ date_time }}</p>
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-7" id="strict-map">
+            {{ map|safe }}
+        </div>
+    </div>
+    
 
 </body>
 <script>
@@ -46,6 +63,7 @@
         }
     });
     
-});
+}); 
+
 </script>
 </html>

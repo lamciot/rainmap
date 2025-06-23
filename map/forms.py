@@ -15,3 +15,7 @@ class DateTimeSearchForm(forms.Form):
         widget=forms.DateTimeInput(attrs={'type': 'datetime-local', 'step': '3600'}),
         label='Select Date and Time'
     )
+
+class LoginForm(forms.Form):
+    username = forms.CharField(required=True)
+    password = forms.CharField(widget=forms.PasswordInput, required=True)
