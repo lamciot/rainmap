@@ -31,7 +31,7 @@
     </div>
 
     <div class="p-2">
-        <form method="POST" action="{% url 'login' %}">
+        <form method="POST" action="{% url 'login_base' %}">
             {% csrf_token %}
             <div class="form-group">
                 <label for="date_time">Date and Time:</label>

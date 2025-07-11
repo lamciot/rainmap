@@ -1,12 +1,13 @@
-from django.shortcuts import render
-from .models import MuongXen
-from .forms import DateTimeSearchForm
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from .models import MuongXen, User
+from .forms import DateTimeSearchForm, LoginForm
 import matplotlib
 matplotlib.use('Agg')  # Set the backend to Agg before importing pyplot
 import numpy as np
 import folium
 
-def map(time='2021-01-01T10:00'):
+def map(time=None):
     lat = 20
     lon = 104
     # Create a Map instance
@@ -210,32 +211,24 @@ def show_map(request):
 
 def login(request):
     if request.method == "POST":
-        # username = request.POST.get('username')
-        # password = request.POST.get('password')
-        date_time = request.POST.get('date_time')
-        search_entry = MuongXen.objects.filter(date_time=date_time)
-        entry = list(search_entry.values_list('data',flat=True))
-        map_html = map(date_time)
-        context = None
-        if search_entry:
-            context = {
-                'map': map_html, 'date_time': date_time, 'entry':entry,
-                'st_xala': list(search_entry.values_list('st_xa_la', flat=True))[0],
-                'st_muonglat': list(search_entry.values_list('st_muong_lat', flat=True))[0],
-                'st_cuadat': list(search_entry.values_list('st_cua_dat', flat=True))[0],
-                'st_muongxen': list(search_entry.values_list('st_muong_xen', flat=True))[0],
-                'st_quychau': list(search_entry.values_list('st_quy_chau', flat=True))[0]
-            }
+        form = LoginForm(request.POST) 
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            search_username = User.objects.filter(username=username)
+            if search_username is not None:
+                search_password = list(search_username.values_list('password',flat=True))[0]
+                if password == search_password:
+                    
+                    # return render(request, ['login-base.html'], context)
+                    return redirect('login_base')
+                else:
+                    print("Sai pass")
+            else:
+                print("Invalid username or password")
         else:
-            context = {
-                'map': map_html, 'date_time': date_time,
-                'st_xala': None,
-                'st_muonglat': None,
-                'st_cuadat': None,
-                'st_muongxen': None,
-                'st_quychau':None 
-            }
-        return render(request, ['login-base.html'], context)
+            form = LoginForm()
+            print("form not valid")
     return render(request, 'login.html')
 
 
@@ -243,7 +236,33 @@ def register(request):
     return render(request, 'register.html')
 
 def login_base(request):
-    return render(request, 'login-base.html')
+    map_html = map()
+    date_time = None
+    context = {
+        'map': map_html, 'date_time': date_time,
+        'st_xala': None,
+        'st_muonglat': None,
+        'st_cuadat': None,
+        'st_muongxen': None,
+        'st_quychau':None 
+    }
+    if request.method == "POST":
+        date_time = request.POST.get('date_time')
+        search_entry = MuongXen.objects.filter(date_time=date_time)
+        entry = list(search_entry.values_list('data',flat=True))
+        if search_entry:
+                context = {
+                    'map': map_html, 'date_time': date_time, 'entry':entry,
+                    'st_xala': list(search_entry.values_list('st_xa_la', flat=True))[0],
+                    'st_muonglat': list(search_entry.values_list('st_muong_lat', flat=True))[0],
+                    'st_cuadat': list(search_entry.values_list('st_cua_dat', flat=True))[0],
+                    'st_muongxen': list(search_entry.values_list('st_muong_xen', flat=True))[0],
+                    'st_quychau': list(search_entry.values_list('st_quy_chau', flat=True))[0]
+                }
+        else:
+            print("No data found!")
+        return render(request, 'login-base.html', context)
+    return render(request, 'login-base.html', context)
 
 def add_form(request):
     return render(request, 'add-form.html')
