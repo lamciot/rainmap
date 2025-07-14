@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
+from django.contrib import messages
 from .models import MuongXen, User
-from .forms import DateTimeSearchForm, LoginForm
+from .forms import LoginForm, RegisterForm
 import matplotlib
 matplotlib.use('Agg')  # Set the backend to Agg before importing pyplot
 import numpy as np
@@ -216,15 +216,18 @@ def login(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             search_username = User.objects.filter(username=username)
-            if search_username is not None:
+            if search_username:
                 search_password = list(search_username.values_list('password',flat=True))[0]
+                print("Error search_password")
                 if password == search_password:
                     
                     # return render(request, ['login-base.html'], context)
                     return redirect('login_base')
                 else:
+                    messages.error(request, "Username hoặc mật khẩu không chính xác!")
                     print("Sai pass")
             else:
+                messages.error(request, "Username hoặc mật khẩu không chính xác!")
                 print("Invalid username or password")
         else:
             form = LoginForm()
@@ -233,6 +236,27 @@ def login(request):
 
 
 def register(request):
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            retype_password = form.cleaned_data['retype_password']
+            search_username = User.objects.filter(username=username)
+            if search_username:
+                messages.error(request, "Username đã tồn tại!")
+                messages.info(request, "Vui lòng nhập tên khác")
+                print("Username đã tồn tại")
+            elif password != retype_password:
+                messages.info(request, "Mật khẩu nhập lại không đúng!")
+                print("Mật khẩu nhập lại không đúng!")
+            else:
+                user = User()
+                user.username = request.POST.get('username')
+                user.password = request.POST.get('password')
+                user.save()
+                return render(request, 'login.html')
+                
     return render(request, 'register.html')
 
 def login_base(request):

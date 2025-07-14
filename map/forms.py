@@ -19,3 +19,9 @@ class DateTimeSearchForm(forms.Form):
 class LoginForm(forms.Form):
     username = forms.CharField(required = True)
     password = forms.CharField()
+
+class RegisterForm(forms.Form):
+    username = forms.CharField(required=True)
+    password = forms.CharField(required=True)
+    retype_password = forms.CharField(required=True)
+    
