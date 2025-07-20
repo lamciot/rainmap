@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import MuongXen, User
-from .forms import LoginForm, RegisterForm
+from .forms import LoginForm, RegisterForm, EditForm
 import matplotlib
 matplotlib.use('Agg')  # Set the backend to Agg before importing pyplot
 import numpy as np
@@ -288,5 +288,38 @@ def login_base(request):
         return render(request, 'login-base.html', context)
     return render(request, 'login-base.html', context)
 
-def add_form(request):
-    return render(request, 'add-form.html')
+def form(request, date_time):
+    return render(request, 'add-form.html', {'date_time':date_time})
+
+def edit_form(request, date_time):
+    if request.method == "POST":
+        search_entry = MuongXen.objects.get(date_time=date_time)
+        form = EditForm(request.POST)
+        if form.is_valid():
+            st_xala = form.cleaned_data['st_xala']
+            st_muonglat = form.cleaned_data['st_muonglat']
+            st_cuadat = form.cleaned_data['st_cuadat']
+            st_quychau = form.cleaned_data['st_quychau']
+            st_muongxen= form.cleaned_data['st_muongxen']
+            search_entry.st_xa_la = st_xala
+            search_entry.st_muong_lat = st_muonglat
+            search_entry.st_cua_dat = st_cuadat
+            search_entry.st_quy_chau = st_quychau
+            search_entry.st_muong_xen = st_muongxen
+
+            search_entry.save()
+            print("Sua thanh cong!")
+            return redirect("login_base")
+        else:
+            messages.info(request,"Invalid Form")
+            print("form invalid")
+            return redirect(request, 'add-form.html')
+    else:
+        print(" not POST method")
+        return render(request, 'add-form.html')
+        
+def del_form(request, date_time):
+    obj = MuongXen.objects.filter(date_time=date_time)
+    obj.delete() 
+    print("Xoa du lieu thanh cong")
+    return redirect("login_base")

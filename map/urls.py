@@ -9,6 +9,8 @@ urlpatterns = [
     path('login/',views.login, name='login'),
     path('login/base',views.login_base, name='login_base'),
     path('register/',views.register, name='register'),
-    path('form/',views.add_form, name='add_form'),
+    path('form/<date_time>',views.form, name='form'),
+    path('form/edit/<date_time>',views.edit_form, name='edit_form'),
+    path('form/delete/<date_time>',views.del_form, name='del_form'),
 
 ]

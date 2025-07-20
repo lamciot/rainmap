@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 import pandas as pd
 
-input_folder = "D:\\DATN\\2021\\01"
+input_folder = "D:\\DATN\\2021"
 input_station = "./MucNuoc.xlsx"
 
 db_config = {
@@ -14,6 +14,9 @@ db_config = {
     "password": "123456",
     "database": "rainmap"
 }
+
+# Global counter to track which row to insert next
+current_row_index = 0
 
 def find_gz_files(root_folder):
     """Recursively find all .dat.gz files in directory and subdirectories"""
@@ -26,6 +29,7 @@ def find_gz_files(root_folder):
     return gz_files
 
 def process_file(path, cursor):
+    global current_row_index
     try:
         
         # Read the compressed file
@@ -33,7 +37,7 @@ def process_file(path, cursor):
             file_bytes = f.read()
 
         # Read the XLSX file (skip 1st column using 'usecols')
-        df = pd.read_excel(input_station, usecols=[1,2,3,4,5],  nrows=745)
+        df = pd.read_excel(input_station, usecols=[1,2,3,4,5], nrows=8760)
 
         # Extract datetime from filename (assuming format: mapYYYYMMDD.HHMM.dat.gz)
         filename = path.split('\\')[-1]  # Get just the filename part
@@ -55,17 +59,20 @@ def process_file(path, cursor):
         # # Xử lý dữ liệu
         str_mx = np.array2string(pr_subset_mx, separator=' ', threshold=np.inf, max_line_width=np.inf)
         str_mx = str_mx.replace("'", "").replace("[", "").replace("]", "")
-        #Insert xlsx data
-        for _, row in df.iterrows():
-            cols = ','.join([f'"{c}"' for c in df.columns])
-            values = ','.join(['%s'] * len(df.columns))
+        
+        # Insert only one row from Excel data (current_row_index)
+        if current_row_index < len(df):
+            row = df.iloc[current_row_index]
             int_list = [int(x) for x in row]
             
-        cursor.execute(
-                """INSERT INTO map_muongxen (date_time, data, st_quy_chau, st_muong_lat, st_xa_la, st_cua_dat, st_muong_xen)
-                VALUES (%s,%s,%s,%s,%s,%s,%s)
-                """,(file_datetime,str_mx, int_list[0],int_list[1],int_list[2],int_list[3],int_list[4],)
-        )
+            cursor.execute(
+                    """INSERT INTO map_muongxen (date_time, data, st_quy_chau, st_muong_lat, st_xa_la, st_cua_dat, st_muong_xen)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s)
+                    """,(file_datetime,str_mx, int_list[0],int_list[1],int_list[2],int_list[3],int_list[4],)
+            )
+            
+            # Increment the row index for next file
+            current_row_index += 1
             
         return True
     except Exception as e:

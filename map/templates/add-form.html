@@ -1,14 +1,42 @@
-<h1>Thêm dữ liệu</h1>
-<label>Date and Time: </label>
-<input type="datetime-local" name="date_time" step="3600" required >
-<label>Xã Là: </label>
-<input type="number">
-<label>Mường Lát: </label>
-<input type="number">
-<label>Cửa Đạt: </label>
-<input type="number">
-<label>Quỳ Châu: </label>
-<input type="number">
-<label>Mường Xén: </label>
-<input type="number">
-<button>Thêm</button>
+<h1>Chỉnh sửa dữ liệu</h1>
+<form method="POST" action="{% url 'edit_form' date_time %}">
+    {% csrf_token %}
+    <label>Date and Time: {{date_time}}</label>
+    {% comment %} <input type="datetime-local" name="date_time" step="3600" required > {% endcomment %}
+    <label>Xã Là: </label>
+    <input type="number" name="st_xala">
+    <label>Mường Lát: </label>
+    <input type="number" name="st_muonglat">
+    <label>Cửa Đạt: </label>
+    <input type="number" name="st_cuadat">
+    <label>Quỳ Châu: </label>
+    <input type="number" name="st_quychau">
+    <label>Mường Xén: </label>
+    <input type="number" name="st_muongxen">
+    <button type="submit" >submit</button>
+</form>
+{% if messages %}
+<ul class="messages">
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+</ul>
+{% comment %} <button name="confirm_ow" value="1">Có</button>
+<button name="confirm_ow" value="0">Không</button> {% endcomment %}
+{% endif %}
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.querySelector('input[type="datetime-local"]');
+    dateInput.addEventListener('input', function() {
+        if (!this.value) return;
+        
+        const date = new Date(this.value);
+        if (date.getMinutes() !== 0) {
+            date.setMinutes(0);
+            this.value = date.toISOString().slice(0, 16);
+        }
+    });
+    
+}); 
+
+</script>
